@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<!-- 
+Date: 20 September 2021
+Filename: Project3.html
+-->
+<head>
+  <meta charset="UTF-8">
+  <title>Unique 3D Scene</title>
+  <!-- Apply CSS -->
+  <link rel="stylesheet" href="static/css/main.css">
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+  <script src="assets/three.min.js"></script>
+  <script src="assets/TrackballControls.js"></script>
+  <script>
+
+    "use strict";
+
+    var scene, camera, renderer;
+    var backgroundScene, backgroundCamera;
+    var canvas;
+    var model;
+    var controls;
+    var loader;
+
+    var sunRotator = new THREE.Object3D();
+    var mercuryRotator = new THREE.Object3D();
+    var venusRotator = new THREE.Object3D();
+    var earthRotator = new THREE.Object3D();
+    var earth;
+    var marsRotator = new THREE.Object3D();
+    var jupiterRotator = new THREE.Object3D();
+    var saturnRotator = new THREE.Object3D();
+    var uranusRotator = new THREE.Object3D();
+    var neptuneRotator = new THREE.Object3D();
+    var plutoRotator = new THREE.Object3D();
+    var alienRotator = new THREE.Object3D();
+
+    var asteroidContainer = new THREE.Object3D();
+    const numberOfAsteroids = 50;
+    var asteroidPeriods = [];
+    var asteroidsEnabled = false;
+
+    var line;
+    var lineActive = false;
+
+    var aliensEnabled = false;
+    var alienLight;
+    var lightHelper;
+
+    var animating = false;
+    var firstAnimate = true;
+    var defaultViewpoint = true;
+    var earthViewpoint = false;
+    var plutoViewpoint = false;
+    var rotationSpeedMultiplier = 1;
+
+    //--------------------------- Hierarchical Modeling Methods -----------------------------------
+
+    function drawSun(){
+      // Create Sunlight
+      const light = new THREE.PointLight(0xffffff, 10, 100);
+      scene.add(light);
+      // The Sun
+      var sun;
+      loader.load( 'textures/sun.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(4,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        sun = new THREE.Mesh( globe, material);
+        sunRotator.add(sun);
+      });
+      model.add(sunRotator);
+    }
+
+    function drawPlanets(){
+      // Mercury
+      var mercury;
+      loader.load( 'textures/mercury.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(.5,20,10);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        mercury = new THREE.Mesh( globe, material);
+        mercury.position.set(-6, 0, 0);
+        mercuryRotator.add(mercury);
+      });
+      model.add(mercuryRotator);
+      // Venus
+      var venus;
+      loader.load( 'textures/venus.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(.9,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        venus = new THREE.Mesh( globe, material);
+        venus.position.set(-8, 0, 0);
+        venusRotator.add(venus);
+      });
+      model.add(venusRotator);
+      // Earth
+      loader.load( 'textures/earth.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(1,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        earth = new THREE.Mesh( globe, material);
+        earth.position.set(-11, 0, 0);
+        earthRotator.add(earth);
+      });
+      model.add(earthRotator);
+      // Mars
+      var mars;
+      loader.load( 'textures/mars.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(1,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        mars = new THREE.Mesh( globe, material);
+        mars.position.set(-15, 0, 0);
+        marsRotator.add(mars);
+      });
+      model.add(marsRotator);
+      // Jupiter
+      var jupiter;
+      loader.load( 'textures/jupiter.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(2,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        jupiter = new THREE.Mesh( globe, material);
+        jupiter.position.set(-25, 0, 0);
+        jupiterRotator.add(jupiter);
+      });
+      model.add(jupiterRotator);
+      // Saturn
+      var saturn;
+      loader.load( 'textures/saturn.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(2,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        saturn = new THREE.Mesh( globe, material);
+        saturn.position.set(-32, 0, 0);
+        saturnRotator.add(saturn);
+      });
+      var rings;
+      loader.load( 'textures/rings.jpg', function ( texture ) {
+        var torus = new THREE.TorusGeometry(2.8, .3, 5, 30);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        rings = new THREE.Mesh( torus, material);
+        rings.rotation.set(Math.PI / 2, 0, 0);
+        rings.position.set(-32, 0, 0);
+        rings.scale.set(1,1,.1);
+        saturnRotator.add(rings);
+      });
+      model.add(saturnRotator);
+      // Uranus
+      var uranus;
+      loader.load( 'textures/uranus.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(1.5,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        uranus = new THREE.Mesh( globe, material);
+        uranus.position.set(-40, 0, 0);
+        uranusRotator.add(uranus);
+      });
+      model.add(uranusRotator);
+      // Neptune
+      var neptune;
+      loader.load( 'textures/neptune.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(1.5,32,16);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        neptune = new THREE.Mesh( globe, material);
+        neptune.position.set(-45, 0, 0);
+        neptuneRotator.add(neptune);
+      });
+      model.add(neptuneRotator);
+      // Pluto
+      var pluto;
+      loader.load( 'textures/pluto.jpg', function ( texture ) {
+        var globe = new THREE.SphereGeometry(.5,16,8);
+        var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+        pluto = new THREE.Mesh( globe, material);
+        pluto.position.set(-50, 0, 0);
+        plutoRotator.add(pluto);
+      });
+      model.add(plutoRotator);
+    }
+
+    function drawAsteroids(){
+      for(let i = 0; i < numberOfAsteroids; i++){
+        asteroidPeriods[i] = (8 + 2*Math.random()) / 10000;
+        var tempRotator = new THREE.Object3D();
+        var tempAsteroid = new THREE.Mesh(
+                new THREE.DodecahedronGeometry(0.1*Math.random()),
+                new THREE.MeshLambertMaterial( { color: 0x6e6e6e } )
+        );
+        let x = - (17 + 7*Math.random());
+        let y;
+        let z;
+        if(Math.random() > 0.5) {
+          y = Math.random();
+          z = 2*Math.random();
+        }
+        else {
+          y = -Math.random();
+          z = -2*Math.random();
+        }
+        tempAsteroid.position.set(x, y, z);
+        tempRotator.add(tempAsteroid);
+        asteroidContainer.add(tempRotator);
+      }
+    }
+
+    //--------------------------- Main Create World -----------------------------------
+
+    function createWorld() {
+      loader = new THREE.TextureLoader();
+      // Create Renderer and Scene
+      renderer.setClearColor( 0x000000 );
+      scene = new THREE.Scene();
+      // Set Deep Space Background
+      loader.load( 'textures/space.jpg', function ( texture ) {
+        texture.transparent = true;
+        scene.background = texture;
+      });
+      var texture = THREE.ImageUtils.loadTexture('textures/space.jpg');
+      var backgroundMesh = new THREE.Mesh(new THREE.PlaneGeometry(2,2,0),new THREE.MeshBasicMaterial({map:texture}));
+      backgroundMesh.material.depthTest = false;
+      backgroundMesh.material.depthWrite = false;
+      backgroundScene = new THREE.Scene();
+      backgroundCamera = new THREE.Camera();
+      backgroundScene.add(backgroundCamera);
+      backgroundScene.add(backgroundMesh);
+      // Camera
+      camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.set(0,0,100);
+      // Lights
+      scene.add( new THREE.DirectionalLight( 0xffffff, 0.4 ) );
+      scene.add(camera);
+      // Model
+      model = new THREE.Object3D();
+      // Create Astronomical Objects
+      drawSun();
+      drawPlanets();
+      // Asteroids NOT included in model/scene at this step; must be enabled by HTML
+      drawAsteroids();
+      // Scale Model, Set Initial Viewpoint
+      model.rotation.set(0.2,0,0);
+      scene.add(model);
+    }
+
+    //--------------------------- Animation Support -----------------------------------
+
+    function render() {
+      renderer.autoClear = false;
+      renderer.clear();
+      renderer.render(backgroundScene, backgroundCamera);
+      renderer.render(scene, camera);
+    }
+
+    function updateForFrame() {
+      // Cause Animation Effect
+      mercuryRotator.rotation.y  += 0.002 * rotationSpeedMultiplier;
+      venusRotator.rotation.y  += 0.0017 * rotationSpeedMultiplier;
+      earthRotator.rotation.y += 0.0013 * rotationSpeedMultiplier;
+      marsRotator.rotation.y  += 0.001 * rotationSpeedMultiplier;
+      jupiterRotator.rotation.y  += 0.0008 * rotationSpeedMultiplier;
+      saturnRotator.rotation.y  += 0.0006 * rotationSpeedMultiplier;
+      uranusRotator.rotation.y  += 0.0004 * rotationSpeedMultiplier;
+      neptuneRotator.rotation.y  += 0.0003 * rotationSpeedMultiplier;
+      plutoRotator.rotation.y  += 0.0001 * rotationSpeedMultiplier;
+      if(asteroidsEnabled){
+        for(let i = 0; i < numberOfAsteroids; i++){
+          asteroidContainer.children[i].rotation.y += asteroidPeriods[i]*rotationSpeedMultiplier;
+        }
+      }
+      if(aliensEnabled){
+        // Rotate Alien Rotator & Update Light Position
+        alienRotator.rotation.y -= 0.002 * rotationSpeedMultiplier;
+        alienLight.position.x = (
+                alienRotator.children[0].position.x *
+                Math.cos(alienRotator.rotation.y) +
+                alienRotator.children[0].position.z *
+                Math.sin(alienRotator.rotation.y)
+        );
+        alienLight.position.z = (
+                alienRotator.children[0].position.z *
+                Math.cos(alienRotator.rotation.y) -
+                alienRotator.children[0].position.x *
+                Math.sin(alienRotator.rotation.y)
+        );
+      }
+    }
+
+    function doFrame() {
+      if (animating) {
+        updateForFrame();
+      }
+      controls.update();
+      render();
+      requestAnimationFrame(doFrame);
+    }
+
+    function doAnimateCheckbox() {
+      if(animating != document.getElementById("animate").checked) {
+        animating = document.getElementById("animate").checked;
+      }
+      doFrame();
+    }
+
+    function doRotationPoint() {
+      if(lineActive != document.getElementById("rotation-point").checked) {
+        lineActive = document.getElementById("rotation-point").checked;
+      }
+      if(scene.getObjectByName('line') != null){
+        scene.remove(line);
+      }
+      if(lineActive) {
+        // Draw Arrow From y+5 to controls.target
+        var start = new THREE.Vector3(controls.target.x, controls.target.y + 2, controls.target.z);
+        var finish = new THREE.Vector3(controls.target.x, controls.target.y, controls.target.z);
+        var direction = finish.clone().sub(start);
+        console.log(direction.normalize());
+        line = new THREE.ArrowHelper(direction.normalize(), start, 2, 0xff0505);
+        line.name = 'line';
+
+        scene.add(line);
+        doFrame();
+      }
+    }
+
+    function doViewpoint(){
+      if(defaultViewpoint){
+        defaultViewpoint = true;
+        camera.position.set(0,0,50);
+        controls.reset();
+      }
+      if(earthViewpoint){
+        let x = earthRotator.children[0].position.x; // Initial
+        let y = earthRotator.children[0].position.y; // Initial
+        let z = earthRotator.children[0].position.z; // Initial
+        controls.reset();
+        camera.position.set(x,(y+2),z);
+        camera.lookAt(0,0,0); // Look at Sun
+      }
+      if(plutoViewpoint){
+        // Set Camera at Pluto Position
+        let x = plutoRotator.children[0].position.x; // Initial
+        let y = plutoRotator.children[0].position.y; // Initial
+        let z = plutoRotator.children[0].position.z; // Initial
+        controls.reset();
+        camera.position.set(x,(y+2),z);
+        camera.lookAt(0,0,0); // Look at Sun
+      }
+    }
+    function doDefaultViewpoint(){
+      defaultViewpoint = true;
+      earthViewpoint = false;
+      plutoViewpoint = false;
+      doViewpoint();
+      doFrame();
+    }
+    function doEarthViewpoint(){
+      earthViewpoint = true;
+      plutoViewpoint = false;
+      defaultViewpoint = false;
+      doViewpoint();
+      doFrame();
+    }
+    function doPlutoViewpoint(){
+      plutoViewpoint = true;
+      earthViewpoint = false;
+      defaultViewpoint = false;
+      doViewpoint();
+      doFrame();
+    }
+
+    function doAsteroids(){
+      asteroidsEnabled = document.getElementById("asteroids").checked;
+      if(asteroidsEnabled){
+        asteroidContainer.name = 'asteroidContainer';
+        scene.add(asteroidContainer);
+      }
+      else {
+        if(scene.getObjectByName('asteroidContainer') != null)
+          scene.remove(asteroidContainer);
+      }
+      doFrame();
+    }
+
+    function doSpeedChange(){
+      rotationSpeedMultiplier = parseInt(document.getElementById("speed").value);
+    }
+
+    function doAliens(){
+      if(aliensEnabled != document.getElementById("aliens").checked) {
+        aliensEnabled = document.getElementById("aliens").checked;
+      }
+      if(scene.getObjectByName('aliens') != null){
+        scene.remove(alienRotator);
+        scene.remove(alienLight);
+        scene.remove(lightHelper);
+      }
+      if(aliensEnabled) {
+        var ship = new THREE.Mesh(
+                new THREE.SphereGeometry(1, 20, 20),
+                new THREE.MeshLambertMaterial({
+                  color: 0x91908d
+                })
+        );
+        ship.scale.set(1, 0.3, 1);
+        ship.position.set(10, 5, 5);
+        var dome = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 12, 8, Math.PI * 0.60, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5),
+                new THREE.MeshPhongMaterial({
+                  color: 0xceddf5,
+                  opacity: 0.2,
+                  transparent: true,
+                  side: THREE.DoubleSide
+                })
+        );
+        dome.rotation.x += Math.PI;
+        dome.position.set(10, 5.3, 5);
+        var alien = new THREE.Mesh(
+                new THREE.SphereGeometry(0.1, 20, 20),
+                new THREE.MeshLambertMaterial({
+                  color: 0x34eb34
+                })
+        );
+        alien.scale.set(1, 2, 1);
+        alien.position.set(10, 5.4, 5);
+
+        alienLight = new THREE.SpotLight(
+                0x44ff00,  		// Color
+                2, 				// Intensity
+                5, 				// Distance
+                Math.PI * 0.01, // Angle
+                0.5, 			// Penumbra
+                1 				// Decay
+        );
+        alienLight.position.set(10, 5, 5);
+
+        lightHelper = new THREE.SpotLightHelper(alienLight);
+
+        alienRotator.add(ship);
+        alienRotator.add(dome);
+        alienRotator.add(alien);
+        scene.add(alienLight);
+        scene.add(lightHelper);
+        alienRotator.name = 'aliens';
+
+        scene.add(alienRotator);
+        doFrame();
+      }
+    }
+
+    //----------------------------- Keyboard/Window Support ---------------------------
+
+    function doKey(event) {
+      if(defaultViewpoint){ // Can't Move while in Non-Standard viewpoint
+        var code = event.keyCode;
+        var rotated = true;
+        switch( code ) {
+          case 37: // Left Arrow
+            if(camera.position.z <= 0){
+              camera.position.x += 1; controls.target.x += 1;
+            } else {
+              camera.position.x -= 1; controls.target.x -= 1;
+            }
+            break;
+          case 39: // Right Arrow
+            if(camera.position.z <= 0) {
+              camera.position.x -= 1; controls.target.x -= 1;
+            } else {
+              camera.position.x += 1; controls.target.x += 1;
+            }
+            break;
+          case 38: camera.position.y += 1; controls.target.y += 1; break;    // Up Arrow
+          case 40: camera.position.y -= 1; controls.target.y -= 1; break;    // Down Arrow
+          case 32: camera.position.set(0,0,50); controls.reset(); break;  // Space Bar
+          default: rotated = false;
+        }
+        if (rotated) {
+          event.preventDefault();
+          if (!animating) {
+            render();
+          }
+        }
+        if(document.getElementById("rotation-point").checked == true){
+          doRotationPoint();
+        }
+      }
+    }
+
+    function doResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      render();
+    }
+
+    //---------------------------------------------------------------------------------
+
+    function init() {
+      try {
+        try {
+          renderer = new THREE.WebGLRenderer ({
+            antialias: true, alpha: true
+          });
+        } catch (e) {
+          document.body.innerHTML = "<h3><b>Sorry, WebGL is required but is not available.</b><h3>";
+          return;
+        }
+        canvas = renderer.domElement;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        window.addEventListener("resize", doResize, false);
+        document.body.appendChild(canvas);
+        document.addEventListener("keydown", doKey, false);
+
+        document.getElementById("animate").checked = false;
+        document.getElementById("animate").onchange = doAnimateCheckbox;
+        document.getElementById("rotation-point").checked = false;
+        document.getElementById("rotation-point").onchange = doRotationPoint;
+        document.getElementById("asteroids").checked = false;
+        document.getElementById("asteroids").onchange = doAsteroids;
+        document.getElementById("free").onchange = doDefaultViewpoint;
+        document.getElementById("earth").onchange = doEarthViewpoint;
+        document.getElementById("pluto").onchange = doPlutoViewpoint;
+        document.getElementById("speed").onchange = doSpeedChange;
+        document.getElementById("aliens").checked = false;
+        document.getElementById("aliens").onchange = doAliens;
+
+        createWorld();
+        controls = new THREE.TrackballControls(camera, canvas);  
+        controls.noPan = true;  
+        controls.noZoom = false;  // Zoom with Mouse/DPad.
+        controls.noRotate = false;
+        controls.maxDistance = 100;
+
+        render();
+        requestAnimationFrame(doFrame);
+      } catch (e) {
+        document.body.innerHTML = "<h3><b>Sorry, an error occurred:<br>" + e + "</b></h3>";
+      }
+    }
+
+  </script>
+</head>
+<body onload="init()" style="background-color:black">
+
+<div class="main">
+  <h2 class="rainbow">The Solar System! (again)</h2>
+  <h3 class="rainbow"><em>but improved</em></h3>
+
+  <p class="options"><b>Use Arrow Keys to Move within the Model. Drag to Look Around.</b></p>
+  <p class="options"><b>Mouse/DPad to Zoom. Space Bar to Reset.</b></p>
+  <div> <!-- Options -->
+    <input type="checkbox" id="animate">
+    <label class="options">Animate</label>
+    <input type="checkbox" id="rotation-point">
+    <label class="options">Focal Point</label>
+    <input type="checkbox" id="asteroids">
+    <label class="options">Asteroid Belt</label>
+    <input class="slider" type="range" id="speed" name="speed" min="1" max="10" value="1" step="0.1">
+    <label class="options">Speed</label>
+    <input type="checkbox" id="aliens">
+    <label class="options">Aliens?</label>
+  </div>
+  <fieldset>
+    <legend class="options">Set Viewpoint</legend>
+    <div class="options"> <!-- Viewpoint Boxes -->
+      <input type="radio" id="free" name="viewpoints" value="Free" checked>
+      <label for="free">Default  </label>
+      <input type="radio" id="earth" name="viewpoints" value="Earth">
+      <label for="earth">Initial Earth  </label>
+      <input type="radio" id="pluto" name="viewpoints" value="Pluto">
+      <label for="pluto">Initial Pluto  </label>
+    </div>
+  </fieldset>
+</div>
+
+</p>
+</body>
+</html>

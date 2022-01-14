@@ -1,0 +1,44 @@
+body {
+    font-family: "Lato", sans-serif;
+}
+/* Main Content Format */
+div.main {
+    margin-left: 140px;
+    font-size: 20px;
+    text-align: center;
+}
+/* Rainbow Gradient Text */
+.rainbow {
+    background: -webkit-linear-gradient(#9400d3, #ff0000, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+/* Options on Page */
+.options {
+    color:azure;
+    font-size: 20px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+/* Speed Slider */
+.slider {
+    width: 20%;
+    height: 10px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    -webkit-transition: .2s;
+}
+.slider::-webkit-slider-thumb {
+    width: 15px;
+    height: 20px;
+    background: #f20000;
+    cursor: pointer;
+}
+.slider::-moz-range-thumb {
+    width: 15px;
+    height: 20px;
+    background: #f20000;
+    cursor: pointer;
+}
